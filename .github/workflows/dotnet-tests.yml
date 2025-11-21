@@ -1,31 +1,29 @@
-name: CI - .NET Build & Tests
+name: .NET Build & Test
+
 on:
-  push: { branches: [main] }
-  pull_request: { branches: [main] }
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  build-test:
+    runs-on: windows-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: "8.0.x"
-          cache: false
-      - name: Restore
-        run: dotnet restore DemoUnitTest_ConsoleApp.sln
-      - name: Build
-        run: dotnet build DemoUnitTest_ConsoleApp.sln --configuration Release --no-restore
-      - name: Test + coverage
-        run: >
-          dotnet test UnitTest/UnitTest.csproj
-          --configuration Release --no-build
-          --collect:"XPlat Code Coverage"
-          --logger "trx;LogFileName=test-results.trx"
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: |
-            **/TestResults/*.trx
-            **/TestResults/**/coverage.cobertura.xml
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build project
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test --no-build --verbosity normal
